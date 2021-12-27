@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+from collections import namedtuple
+import subprocess
+import sys
+
+LetterPosition = namedtuple('LetterPosition', ['choices'])
+
+
+def initialise():
+    return [LetterPosition(set(chr(ord('a') + i) for i in range(26))) for j in range(5)]
+
+
+def update(answer, guess, current):
+    updated = [LetterPosition(e.choices) for e in current]
+    for i, l in enumerate(guess):
+        if l == answer[i]:  # Located
+            updated[i].choices.intersection_update(set(l))
+        elif l in answer:  # Used
+            updated[i].choices.discard(l)
+        else:  # Unused
+            for u in updated:
+                u.choices.discard(l)
+    return updated
+
+
+def gen_regex_pos(lp):
+    return "[{}]".format("".join(lp.choices))
+
+
+def gen_regex_guess(current):
+    regex = "{}" * (len(current) + 2)
+    return regex.format(*(['^'] + [gen_regex_pos(e) for e in current] + ['$']))
+
+
+def pick_word():
+    cmdline = 'grep -E "^[a-z]{5}$" /usr/share/dict/words | shuf -n 1 -'
+    pickc = subprocess.run(cmdline, capture_output=True,
+                           check=True, shell=True)
+    return pickc.stdout.decode('utf-8').strip()
+
+
+def guess_word(re):
+    cmdline = 'shuf /usr/share/dict/words | grep -E -m 1 {}'.format(re)
+    guessc = subprocess.run(
+        cmdline, capture_output=True, check=True, shell=True)
+    return guessc.stdout.decode('utf-8').strip()
+
+
+pick = pick_word() if len(sys.argv) <= 1 else sys.argv[1]
+print("Chose target word: {}".format(pick))
+guess = ""
+current = initialise()
+for i in range(6):
+    guessed = False
+    re = gen_regex_guess(current)
+    guess = guess_word(re)
+    print("{}: {}".format(i, guess))
+    if guess == pick:
+        print("Found the target word!")
+        break
+    current = update(pick, guess, current)
+else:
+    print("Failed to find the target word: {}".format(pick))
