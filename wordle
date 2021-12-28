@@ -11,9 +11,9 @@ LetterPosition = namedtuple('LetterPosition', ['choices'])
 LetterScore = namedtuple('LetterScore', ['index', 'letter', 'score'])
 
 class LetterState(Enum):
-    UNUSED = 1
-    USED = 2
-    LOCATED = 3
+    UNUSED = 'b'
+    USED = 'y'
+    LOCATED = 'g'
 
 
 class VT100BackgroundColor(Enum):
@@ -40,7 +40,21 @@ def score_guess_answer(answer, guess):
     return score
 
 
+def score_guess_oracle(guess):
+    score = []
+    oracle = ""
+    print("Guess: {}".format(guess))
+    while len(oracle) != len(guess):
+        oracle = input("Oracle score: ").strip()
+    assert all(c in "bgy" for c in oracle)
+    for (i, (l, o)) in enumerate(zip(guess, oracle)):
+        score.append(LetterScore(i, l, LetterState(o)))
+    return score
+
+
 def score_guess(answer, guess):
+    if answer is None:
+        return score_guess_oracle(guess)
     return score_guess_answer(answer, guess)
 
 
@@ -49,6 +63,7 @@ def found_target(score):
 
 
 def update(current, score):
+    seen = set()
     updated = [LetterPosition(e.choices) for e in current]
     for i, l, s in score:
         if s == LetterState.LOCATED:
@@ -57,8 +72,10 @@ def update(current, score):
             updated[i].choices.discard(l)
         else:
             assert(s == LetterState.UNUSED)
-            for u in updated:
-                u.choices.discard(l)
+            if l not in seen:
+                for u in updated:
+                    u.choices.discard(l)
+        seen.add(l)
     return updated
 
 
@@ -108,7 +125,10 @@ def pick_word():
 
 
 pick = pick_word() if len(sys.argv) <= 1 else sys.argv[1]
-print("Chose target word: {}".format(pick))
+if pick == "-":
+    pick = None
+if pick:
+    print("Chose target word: {}".format(pick))
 guess = ""
 current = initialise()
 for i in range(6):
