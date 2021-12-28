@@ -16,6 +16,13 @@ class LetterState(Enum):
     LOCATED = 3
 
 
+class VT100BackgroundColor(Enum):
+    BLACK = '\033[40m'
+    YELLOW = '\033[43m'
+    GREEN = '\033[42m'
+    DEFAULT = '\033[49m'
+
+
 def initialise():
     return [LetterPosition(set(chr(ord('a') + i) for i in range(26))) for j in range(5)]
 
@@ -70,6 +77,27 @@ def guess_word(re):
     return guessc.stdout.decode('utf-8').strip()
 
 
+def highlight_scored(score):
+    seen = set()
+    highlight = ""
+    for i, l, s in score:
+        if s == LetterState.LOCATED:
+            color = VT100BackgroundColor.GREEN
+        elif s == LetterState.USED:
+            if l in seen:
+                color = VT100BackgroundColor.DEFAULT
+            else:
+                color = VT100BackgroundColor.YELLOW
+        else:
+            assert(s == LetterState.UNUSED)
+            color = VT100BackgroundColor.BLACK
+        seen.add(l)
+        highlight += "{}{}".format(color.value, l)
+    else:
+        highlight += VT100BackgroundColor.DEFAULT.value
+    return highlight
+
+
 pick = pick_word() if len(sys.argv) <= 1 else sys.argv[1]
 print("Chose target word: {}".format(pick))
 guess = ""
@@ -79,7 +107,7 @@ for i in range(6):
     re = gen_regex_guess(current)
     guess = guess_word(re)
     score = score_guess(pick, guess)
-    print("{}: {}".format(i, guess))
+    print("{}: {}".format(i, highlight_scored(score)))
     if guess == pick:
         print("Found the target word!")
         break
