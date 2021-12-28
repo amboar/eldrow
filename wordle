@@ -63,13 +63,6 @@ def gen_regex_guess(current):
     return regex.format(*(['^'] + [gen_regex_pos(e) for e in current] + ['$']))
 
 
-def pick_word():
-    cmdline = 'grep -E "^[a-z]{5}$" /usr/share/dict/words | shuf -n 1 -'
-    pickc = subprocess.run(cmdline, capture_output=True,
-                           check=True, shell=True)
-    return pickc.stdout.decode('utf-8').strip()
-
-
 def guess_word(re):
     cmdline = 'shuf /usr/share/dict/words | grep -E -m 1 {}'.format(re)
     guessc = subprocess.run(
@@ -96,6 +89,13 @@ def highlight_scored(score):
     else:
         highlight += VT100BackgroundColor.DEFAULT.value
     return highlight
+
+
+def pick_word():
+    cmdline = 'grep -E "^[a-z]{5}$" /usr/share/dict/words | shuf -n 1 -'
+    pickc = subprocess.run(cmdline, capture_output=True,
+                           check=True, shell=True)
+    return pickc.stdout.decode('utf-8').strip()
 
 
 pick = pick_word() if len(sys.argv) <= 1 else sys.argv[1]
