@@ -5,22 +5,43 @@
 from collections import namedtuple
 import subprocess
 import sys
+from enum import Enum
 
 LetterPosition = namedtuple('LetterPosition', ['choices'])
+LetterScore = namedtuple('LetterScore', ['index', 'letter', 'score'])
+
+class LetterState(Enum):
+    UNUSED = 1
+    USED = 2
+    LOCATED = 3
 
 
 def initialise():
     return [LetterPosition(set(chr(ord('a') + i) for i in range(26))) for j in range(5)]
 
 
-def update(answer, guess, current):
-    updated = [LetterPosition(e.choices) for e in current]
+def score_guess(answer, guess):
+    score = []
     for i, l in enumerate(guess):
-        if l == answer[i]:  # Located
+        if l == answer[i]:
+            state = LetterState.LOCATED
+        elif l in answer:
+            state = LetterState.USED
+        else:
+            state = LetterState.UNUSED
+        score.append(LetterScore(i, l, state))
+    return score
+
+
+def update(current, score):
+    updated = [LetterPosition(e.choices) for e in current]
+    for i, l, s in score:
+        if s == LetterState.LOCATED:
             updated[i].choices.intersection_update(set(l))
-        elif l in answer:  # Used
+        elif s == LetterState.USED:
             updated[i].choices.discard(l)
-        else:  # Unused
+        else:
+            assert(s == LetterState.UNUSED)
             for u in updated:
                 u.choices.discard(l)
     return updated
@@ -57,10 +78,11 @@ for i in range(6):
     guessed = False
     re = gen_regex_guess(current)
     guess = guess_word(re)
+    score = score_guess(pick, guess)
     print("{}: {}".format(i, guess))
     if guess == pick:
         print("Found the target word!")
         break
-    current = update(pick, guess, current)
+    current = update(current, score)
 else:
     print("Failed to find the target word: {}".format(pick))
