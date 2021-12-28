@@ -27,7 +27,7 @@ def initialise():
     return [LetterPosition(set(chr(ord('a') + i) for i in range(26))) for j in range(5)]
 
 
-def score_guess(answer, guess):
+def score_guess_answer(answer, guess):
     score = []
     for i, l in enumerate(guess):
         if l == answer[i]:
@@ -38,6 +38,10 @@ def score_guess(answer, guess):
             state = LetterState.UNUSED
         score.append(LetterScore(i, l, state))
     return score
+
+
+def score_guess(answer, guess):
+    return score_guess_answer(answer, guess)
 
 
 def update(current, score):
