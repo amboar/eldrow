@@ -116,10 +116,10 @@
 
 			function selectWord() {
 				regex = genSelectionRegex()
-				for (const word of candidates) {
-					if (regex.test(word)) {
-						return word
-					}
+				selected = candidates.filter(word => regex.test(word))
+				if (selected.length) {
+					choice = Math.floor(Math.random() * selected.length)
+					return selected[choice]
 				}
 				console.log("Bad state!")
 				return "xxxxx"
