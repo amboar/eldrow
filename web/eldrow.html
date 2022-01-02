@@ -79,7 +79,7 @@
 				sls = sc.getElementsByTagName('input')
 				seen = new Set()
 				for (i = 0; i < sls.length; i++) {
-					letter = sls[i].value.replace(/&nbsp;/g, '').toLowerCase()
+					letter = sls[i].value.toLowerCase()
 					classes = sls[i].className
 					if (classes.search(/(unused)|(default)/) > -1) {
 						if (!seen.has(letter)) {
