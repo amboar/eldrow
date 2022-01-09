@@ -1,0 +1,23 @@
+#!/usr/bin/python3
+
+from collections import Counter
+from itertools import chain
+import json
+import sys
+
+with open('candidates.js', 'rb') as ch:
+    # Trim header comments
+    ch.readline()
+    ch.readline()
+    ch.readline()
+    # Trim assignment
+    ch.seek(len("candidates = "), 1)
+    candidates = json.load(ch)
+
+weights = Counter(l for c in candidates for l in c)
+scores = dict((candidate, sum(weights[c] for c in candidate))
+                for candidate in candidates
+                    if len(set(candidate)) == len(candidate))
+
+for candidate, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
+    print(f"{candidate}: {score}")
